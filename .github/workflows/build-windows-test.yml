@@ -33,8 +33,8 @@ jobs:
       - name: Build mss32.dll
         shell: pwsh
         run: |
-          mingw32-make prebuild configure_win WIN_BUILD_DIR=build/win-Debug
-          cmake --build build/win-Debug --target mss32 --parallel
+          mingw32-make prebuild configure_win DEBUG=0 WIN_BUILD_DIR=build/win-Release
+          cmake --build build/win-Release --target mss32 --parallel
           Remove-Item -Path bin/windows/mss32.dll -Force -ErrorAction SilentlyContinue
           Move-Item -Path bin/windows/mss32.build.dll -Destination bin/windows/mss32.dll -Force
 
