@@ -31,9 +31,12 @@ jobs:
           "$env:GITHUB_WORKSPACE\tools\mingw\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Build mss32.dll
-        shell: cmd
+        shell: pwsh
         run: |
-          mingw32-make build_win WIN_BUILD_DIR=build/win-Debug WIN_GAME_DIR=bin/windows
+          mingw32-make prebuild configure_win WIN_BUILD_DIR=build/win-Debug
+          cmake --build build/win-Debug --target mss32 --parallel
+          Remove-Item -Path bin/windows/mss32.dll -Force -ErrorAction SilentlyContinue
+          Move-Item -Path bin/windows/mss32.build.dll -Destination bin/windows/mss32.dll -Force
 
       - name: Upload mss32.dll
         uses: actions/upload-artifact@v4
