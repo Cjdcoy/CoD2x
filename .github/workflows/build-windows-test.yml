@@ -33,7 +33,7 @@ jobs:
       - name: Build mss32.dll
         shell: cmd
         run: |
-          mingw32-make build_win
+          mingw32-make build_win WIN_BUILD_DIR=build/win-Debug WIN_GAME_DIR=bin/windows
 
       - name: Upload mss32.dll
         uses: actions/upload-artifact@v4
