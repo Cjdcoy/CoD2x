@@ -6,6 +6,31 @@
 #include "../shared/cod2_dvars.h"
 
 static dvar_t* jump_bounceEnable = NULL;
+static bool physics_wasListenServerRunning = false;
+
+static bool physics_isListenServerRunning()
+{
+    return dedicated && dedicated->value.integer == 0 && sv_running && sv_running->value.boolean;
+}
+
+static void physics_setJumpBounceWriteProtected(bool writeProtected)
+{
+    dvarFlags_e writeProtectFlag = DEBUG_RELEASE(DVAR_CHEAT, DVAR_NOWRITE);
+
+    if (!jump_bounceEnable)
+    {
+        return;
+    }
+
+    if (writeProtected)
+    {
+        jump_bounceEnable->flags = (dvarFlags_e)(jump_bounceEnable->flags | writeProtectFlag);
+    }
+    else
+    {
+        jump_bounceEnable->flags = (dvarFlags_e)(jump_bounceEnable->flags & ~writeProtectFlag);
+    }
+}
 
 static bool physics_isJumpBounceEnabled()
 {
@@ -68,6 +93,15 @@ void PM_ProjectVelocity_Win32()
 
 void physics_frame()
 {
+    bool listenServerRunning = physics_isListenServerRunning();
+
+    if (physics_wasListenServerRunning && !listenServerRunning && jump_bounceEnable)
+    {
+        Dvar_SetBool(jump_bounceEnable, false);
+    }
+
+    physics_setJumpBounceWriteProtected(!listenServerRunning);
+    physics_wasListenServerRunning = listenServerRunning;
 }
 
 void physics_init()
