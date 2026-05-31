@@ -3,26 +3,13 @@
 #include <math.h>
 
 #include "shared.h"
-#include "../shared/cod2_client.h"
 #include "../shared/cod2_dvars.h"
-#include "../shared/cod2_shared.h"
 
 static dvar_t* jump_bounceEnable = NULL;
-static bool physics_serverJumpBounceEnabled = false;
-
-static bool physics_isListenServerRunning()
-{
-    return dedicated && dedicated->value.integer == 0 && sv_running && sv_running->value.boolean;
-}
 
 static bool physics_isJumpBounceEnabled()
 {
-    if (physics_isListenServerRunning())
-    {
-        return jump_bounceEnable && jump_bounceEnable->value.boolean;
-    }
-
-    return physics_serverJumpBounceEnabled;
+    return jump_bounceEnable && jump_bounceEnable->value.boolean;
 }
 
 static void PM_ClipVelocity_Win32(const float* velIn, const float* normal, float* velOut)
@@ -81,25 +68,12 @@ void PM_ProjectVelocity_Win32()
 
 void physics_frame()
 {
-    if (physics_isListenServerRunning())
-    {
-        physics_serverJumpBounceEnabled = jump_bounceEnable && jump_bounceEnable->value.boolean;
-        return;
-    }
-
-    if (clientState < CLIENT_STATE_PRIMED)
-    {
-        physics_serverJumpBounceEnabled = false;
-        return;
-    }
-
-    const char* systeminfo = CL_GetConfigString(CS_SYSTEMINFO);
-    const char* jumpBounceEnable = Info_ValueForKey(systeminfo, "jump_bounceEnable");
-    physics_serverJumpBounceEnabled = atoi(jumpBounceEnable) != 0;
 }
 
 void physics_init()
 {
+    // Test branch: allow the local client to force bounce prediction with
+    // /jump_bounceEnable 0|1 instead of following server systeminfo.
     jump_bounceEnable = Dvar_RegisterBool(
         "jump_bounceEnable",
         false,
@@ -110,6 +84,6 @@ void physics_init()
 void physics_patch()
 {
     // PM_StepSlideMove: replace the CoD2 velocity clip with the CoD4-style
-    // projection used by jump_bounceEnable servers.
+    // projection controlled by the local jump_bounceEnable test cvar.
     patch_call(0x00530ea5, (unsigned int)PM_ProjectVelocity_Win32);
 }
